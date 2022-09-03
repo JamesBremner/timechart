@@ -13,39 +13,74 @@
 class cJob {
     public:
     cJob( const std::string& line );
-    private:
+    void DisplayText();
+
     std::string myName;
-    std::chrono::time_point <std::chrono::system_clock> myStart;
-    std::chrono::time_point <std::chrono::system_clock> myStop;
+    std::chrono::seconds myStart;
+    std::chrono::seconds myStop;
+    std::chrono::duration<int> myDuration;
 };
 
 cJob::cJob( const std::string& line )
 {
-    typedef std::chrono::duration<int,std::milli> milli_t;
-
     myName = line.substr(2, 1);
-    std::tm tm = {};
     std::stringstream ss(line.substr(5, 8));
-    std::cout << ss.str() << "\n";
-    ss >> std::get_time(&tm, "%H:%M:%S");
-    std::cout << tm.tm_hour << " hours and " << tm.tm_min << " minutes\n";
-    myStart = std::chrono::system_clock::from_time_t(std::mktime(&tm));
-    std::cout << date::format("%m/%d/%Y %I:%M:%S %p\n", myStart ) << "\n";
+    ss >> date::parse("%H:%M:%S", myStart);
     
-    //myStart = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::from_time_t(std::mktime(&tm)));
-    std::stringstream ss2(line.substr(19, 8));
-    std::cout << ss2.str() << "\n";
-    ss >> std::get_time(&tm, "%H:%M:%S");
-    myStop = std::chrono::system_clock::from_time_t(std::mktime(&tm));
-   std::cout << date::format("%m/%d/%Y %I:%M:%S %p\n", myStop ) << "\n";
+     std::stringstream ss2(line.substr(19, 8));
+     ss2 >> date::parse("%H:%M:%S", myStop);
 
-    //milli_t d = std::chrono::duration_cast<std::chrono::seconds>( myStop - myStart );
+    myDuration = myStop - myStart;
 
-    // std::cout << std::chrono::system_clock::to_time_t(myStart).tm_hour << " | " << std::chrono::system_clock::to_time_t( myStop ) << "\n";
-    // std::cout << ( myStop - myStart ).count() << "\n";
+     std::cout << "Duration secs " << myDuration.count() << "\n";
 }
 
-void read()
+void cJob::DisplayText()
+{
+    std::cout << myStart.count() << " to " << myStop.count() << ", ";
+}
+
+class cSolution
+{
+public:
+    void read();
+
+    std::vector< std::vector< cJob > > myJob;
+
+    void addJob( const cJob& job );
+
+    void DisplayText();
+};
+
+void cSolution::DisplayText()
+{
+    for( auto& vjob : myJob )
+    {
+        std::cout << vjob[0].myName << ": ";
+        for ( auto& job : vjob )
+        {
+            job.DisplayText();
+        }
+        std::cout << "\n";
+    }
+}
+
+ void cSolution::addJob( const cJob& job )
+ {
+    for( auto& vjob : myJob )
+    {
+        if( job.myName == vjob[0].myName )
+            {
+                vjob.push_back( job );
+                return;
+            }
+    }
+    std::vector< cJob > vjob;
+    vjob.push_back( job );
+    myJob.push_back( vjob );
+ }
+
+void cSolution::read()
 {
     std::ifstream f("input.txt");
     if (!f.is_open())
@@ -59,36 +94,13 @@ void read()
     {
         std::cout << line << "\n";
         cJob job( line );
-
-        std::istringstream iss(line);
-        jobname = line.substr(2, 1);
-
-        std::tm tm = {};
-        std::stringstream ss(line.substr(5, 12));
-        ss >> std::get_time(&tm, "%H:%M:%S");
-        auto start = std::chrono::system_clock::from_time_t(std::mktime(&tm));
-        std::stringstream ss2(line.substr(19, 12));
-        auto stop = std::chrono::system_clock::from_time_t(std::mktime(&tm));
+        addJob( job );
     }
 }
 main()
 {
-    std::string sbaseday("2022-09-02 ");
-    std::chrono::hours timezone(5);
-    
-    std::stringstream ss(sbaseday + "09:45:30");
-
-    std::tm tm = {};
-    ss >> std::get_time(&tm, "%Y-%m-%d %H:%M:%S");
-
-    auto myStart = std::chrono::system_clock::from_time_t(std::mktime(&tm));
-    myStart -= timezone;
-    std::cout << date::format("%I:%M:%S\n", myStart ) << "\n";
-
-    std::chrono::seconds secs;
-    ss >> date::parse("%H:%M:%S", secs);
-    std::cout << "hours past midnight " << secs.count() / (60.0*60.0) << "\n";
-
-    //read();
+    cSolution S;
+    S.read();
+    S.DisplayText();
     return 0;
 }
