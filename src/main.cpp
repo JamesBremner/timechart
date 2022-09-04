@@ -44,7 +44,7 @@ void cJob::DisplayText()
 
 struct sPlotData
 {
-    std::vector<std::vector<double>> trace;
+    std::vector<std::vector<std::pair<int,double>>> trace;
     int min;
     int max;
     double scale;
@@ -75,10 +75,10 @@ sPlotData cSolution::plotData()
     int delta = (ret.max - ret.min) / 100;
     ret.timeStartHours = ret.min / ( 60. * 60. );
     ret.scale = delta / ( 60. * 60. );
-    double onValue = 30;
+    double onValue = 3;
     for (auto &vjob : myJob)
     {
-        std::vector<double> vd;
+        std::vector<std::pair<int,double>> vd;
 
         for (
             int t = ret.min;
@@ -90,16 +90,14 @@ sPlotData cSolution::plotData()
             {
                 if (job.myStart.count() <= t && t <= job.myStop.count())
                 {
-                    v = onValue;
+                    vd.push_back( std::make_pair(t,onValue));
                     break;
                 }
             }
-
-            vd.push_back(v);
-        }
+       }
         std::cout << "\n";
         ret.trace.push_back(vd);
-        onValue -= 10;
+        onValue -= 1;
     }
     return ret;
 }
@@ -184,18 +182,22 @@ public:
         myPlot.XValues(
             pd.timeStartHours,
             pd.scale );
-        wex::plot::trace &t1 = myPlot.AddStaticTrace();
-        wex::plot::trace &t2 = myPlot.AddStaticTrace();
-        wex::plot::trace &t3 = myPlot.AddStaticTrace();
+        //myPlot.axisYminmax( 0,4);
+        wex::plot::trace &t1 = myPlot.AddScatterTrace();
+        wex::plot::trace &t2 = myPlot.AddScatterTrace();
+        wex::plot::trace &t3 = myPlot.AddScatterTrace();
         t1.thick(6);
         t2.thick(6);
         t3.thick(6);
         t1.color(0x0000FF);
         t2.color(0xFF0000);
 
-        t1.set(pd.trace[0]);
-        t2.set(pd.trace[1]);
-        t3.set(pd.trace[2]);
+        for( auto& p : pd.trace[0] )
+            t1.add( p.first, p.second );
+        for( auto& p : pd.trace[1] )
+            t2.add( p.first, p.second );
+        for( auto& p : pd.trace[2] )
+            t3.add( p.first, p.second );
 
         show();
         run();

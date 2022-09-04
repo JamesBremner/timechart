@@ -159,7 +159,7 @@ public:
     void add( double x, double y )
     {
         if( myType != eType::scatter )
-            throw std::runtime_error("nanaplot error: point data added to non scatter type trace");
+            throw std::runtime_error("plot error: point data added to non scatter type trace");
         myX.push_back( x );
         myY.push_back( y );
     }
